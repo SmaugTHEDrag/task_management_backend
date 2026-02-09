@@ -18,32 +18,24 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/projects")
 @RequiredArgsConstructor
-@Tag(
-        name = "Project Members",
-        description = "APIs for managing project members (view, add, remove, leave)"
-)
+@Tag(name = "4. Project Members", description = "APIs for managing project members (view, add, remove, leave)")
 public class ProjectMemberController {
 
     private final IProjectMemberService projectMemberService;
 
-    @Operation(
-            summary = "Get project members",
-            description = "Retrieve all members of a project. Accessible by project members or owner"
-    )
+    @Operation(summary = "Get project members", description = "Get all members of a project")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Project members retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Project not found")
+    })
     @GetMapping("/{projectId}/members")
-    public ResponseEntity<List<ProjectMemberDTO>> getProjectMembers(
-            @PathVariable Long projectId,
-            Principal principal
-    ) {
-        return ResponseEntity.ok(
-                projectMemberService.getMembers(projectId, principal.getName())
-        );
+    public ResponseEntity<List<ProjectMemberDTO>> getProjectMembers(@PathVariable Long projectId, Principal principal)
+    {
+        return ResponseEntity.ok(projectMemberService.getMembers(projectId, principal.getName()));
     }
 
-    @Operation(
-            summary = "Add member to project",
-            description = "Add a new member to the project. Only project owner is allowed"
-    )
+    @Operation(summary = "Add member to project", description = "Add a new member to the project (Only Project Owner)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Member added successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
@@ -51,20 +43,13 @@ public class ProjectMemberController {
     })
     @PostMapping("/{projectId}/members")
     @PreAuthorize("@projectSecurity.isOwner(#projectId, authentication.name)")
-    public ResponseEntity<String> addMember(
-            @PathVariable Long projectId,
-            @RequestBody AddMemberRequestDTO request
-    ) {
+    public ResponseEntity<String> addMember(@PathVariable Long projectId, @RequestBody AddMemberRequestDTO request)
+    {
         projectMemberService.addMember(projectId, request);
-        return ResponseEntity.ok(
-                "You added " + request.getUsername() + " successfully"
-        );
+        return ResponseEntity.ok("Member " + request.getUsername() + " added successfully");
     }
 
-    @Operation(
-            summary = "Remove member from project",
-            description = "Remove a member from the project. Only project owner is allowed"
-    )
+    @Operation(summary = "Remove member from project", description = "Remove member from the project (Only Project Owner)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Member removed successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
@@ -72,31 +57,22 @@ public class ProjectMemberController {
     })
     @DeleteMapping("/{projectId}/members/{username}")
     @PreAuthorize("@projectSecurity.isOwner(#projectId, authentication.name)")
-    public ResponseEntity<String> removeMember(
-            @PathVariable Long projectId,
-            @PathVariable String username
-    ){
+    public ResponseEntity<String> removeMember(@PathVariable Long projectId, @PathVariable String username)
+    {
         projectMemberService.removeMember(projectId, username);
-        return ResponseEntity.ok(
-                "You remove " + username + " successfully"
-        );
+        return ResponseEntity.ok("Member " + username + " removed successfully");
     }
 
-    @Operation(
-            summary = "Leave project",
-            description = "Authenticated user leaves the project"
-    )
+
+    @Operation(summary = "Leave project", description = "User leaves the project voluntarily.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Left project successfully"),
             @ApiResponse(responseCode = "404", description = "Project not found")
     })
     @DeleteMapping("/{projectId}/members/leave")
-    public ResponseEntity<String> leaveProject(
-            @PathVariable Long projectId,
-            Principal principal
-    ) {
+    public ResponseEntity<String> leaveProject(@PathVariable Long projectId, Principal principal)
+    {
         projectMemberService.leaveProject(projectId, principal.getName());
-        return ResponseEntity.ok("You have leave the project");
+        return ResponseEntity.ok("You have left the project");
     }
 }
-
