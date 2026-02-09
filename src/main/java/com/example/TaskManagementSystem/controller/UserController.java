@@ -27,7 +27,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@Tag(name = "Users", description = "APIs for managing users and roles (Admin only)")
+@Tag(name = "2. Users", description = "APIs for managing users and roles (Admin only)")
 public class UserController {
 
     private final IUserService userService;
