@@ -2,6 +2,10 @@ package com.example.TaskManagementSystem.controller;
 
 import com.example.TaskManagementSystem.dto.task.TaskAttachmentDTO;
 import com.example.TaskManagementSystem.service.task.ITaskAttachmentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,11 +18,23 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectId}/tasks/{taskId}/comments/{commentId}/attachments")
+@Tag(
+        name = "7. Task Attachments",
+        description = "APIs for managing file attachments in task comments"
+)
 public class TaskAttachmentController {
 
     private final ITaskAttachmentService attachmentService;
 
-    // ===== Upload attachment =====
+    @Operation(
+            summary = "Upload attachment to a comment",
+            description = "Upload a file attachment to a task comment. Only authorized users can upload attachments."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Attachment uploaded successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Project, task, or comment not found")
+    })
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
     @PreAuthorize("@taskSecurity.canUpdateTask(#projectId, #taskId, principal.username)")
     public ResponseEntity<TaskAttachmentDTO> upload(
@@ -39,7 +55,14 @@ public class TaskAttachmentController {
         );
     }
 
-    // ===== Get attachments of a comment =====
+    @Operation(
+            summary = "Get attachments by comment",
+            description = "Retrieve all file attachments associated with a specific comment"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Attachments retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Comment not found")
+    })
     @GetMapping
     public ResponseEntity<List<TaskAttachmentDTO>> getByComment(
             @PathVariable Long commentId
@@ -49,7 +72,15 @@ public class TaskAttachmentController {
         );
     }
 
-    // ===== Delete attachment =====
+    @Operation(
+            summary = "Delete an attachment",
+            description = "Delete a file attachment. Only the uploader or authorized users can delete it."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Attachment deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Attachment not found")
+    })
     @DeleteMapping("/{attachmentId}")
     public ResponseEntity<String> delete(
             @PathVariable Long attachmentId,
