@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class LoginController {
 
     private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
     @Operation(summary = "User login", description = "Authenticate user credentials and return a JWT token if successful")
     @ApiResponses({
@@ -31,18 +32,19 @@ public class LoginController {
             @ApiResponse(responseCode = "401", description = "Invalid username or password")
     })
     @PostMapping
-    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginForm loginForm)
-    {
+    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginForm loginForm) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginForm.getLogin(),
-                        loginForm.getPassword())
+                        loginForm.getPassword()
+                )
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = JwtUtils.generateJwt(authentication);
+        // ✅ gọi qua bean
+        String jwt = jwtUtils.generateJwt(authentication);
 
         String username = authentication.getName();
         String role = authentication.getAuthorities()

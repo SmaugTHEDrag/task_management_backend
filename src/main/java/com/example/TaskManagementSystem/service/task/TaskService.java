@@ -122,8 +122,7 @@ public class TaskService implements ITaskService {
 
             projectMemberRepository
                     .findByProject_IdAndUser_Username(projectId, dto.getAssignee())
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException("Assignee is not project member"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Assignee is not project member"));
 
             task.setAssignee(assignee);
         }

@@ -29,13 +29,8 @@ public class TaskAttachmentService implements ITaskAttachmentService {
     private final TaskAttachmentMapper attachmentMapper;
 
     @Override
-    public TaskAttachmentDTO upload(
-            Long projectId,
-            Long taskId,
-            Long commentId,
-            MultipartFile file,
-            String username
-    ) {
+    public TaskAttachmentDTO upload(Long projectId, Long taskId, Long commentId, MultipartFile file, String username)
+    {
         TaskComment comment = commentRepository
                 .findByIdAndTask_Id(commentId, taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
@@ -45,10 +40,7 @@ public class TaskAttachmentService implements ITaskAttachmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         try {
-            String fileUrl = fileUploadService.uploadFile(
-                    file,
-                    "task-comments/" + commentId
-            );
+            String fileUrl = fileUploadService.uploadFile(file, "task-comments/" + commentId);
 
             TaskAttachment attachment = new TaskAttachment();
             attachment.setComment(comment);
@@ -56,9 +48,7 @@ public class TaskAttachmentService implements ITaskAttachmentService {
             attachment.setFileName(file.getOriginalFilename());
             attachment.setFileUrl(fileUrl);
 
-            return attachmentMapper.toDTO(
-                    attachmentRepository.save(attachment)
-            );
+            return attachmentMapper.toDTO(attachmentRepository.save(attachment));
 
         } catch (Exception e) {
             throw new RuntimeException("Upload file failed", e);

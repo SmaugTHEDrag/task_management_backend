@@ -83,10 +83,7 @@ public class TaskController {
     })
     @PreAuthorize("@taskSecurity.canDeleteTask(#projectId, principal.username)")
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<String> delete(
-            @PathVariable Long projectId,
-            @PathVariable Long taskId,
-            Principal principal) {
+    public ResponseEntity<String> delete(@PathVariable Long projectId, @PathVariable Long taskId, Principal principal) {
 
         taskService.deleteTask(projectId, taskId, principal.getName());
         return ResponseEntity.ok("Task deleted");

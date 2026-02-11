@@ -1,5 +1,6 @@
 package com.example.TaskManagementSystem.config;
 
+import com.example.TaskManagementSystem.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,7 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
@@ -87,8 +89,9 @@ public class SecurityConfig {
 
     // JWT filter bean (to check token on every request)
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(UserDetailsService userDetailsService) {
-        return new JwtAuthenticationFilter(userDetailsService);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(UserDetailsService userDetailsService, JwtUtils jwtUtils) {
+        return new JwtAuthenticationFilter(userDetailsService, jwtUtils);
     }
+
 
 }
