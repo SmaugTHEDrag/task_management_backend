@@ -75,10 +75,7 @@ public class TaskController {
     }
 
 
-    @Operation(
-            summary = "Delete a task",
-            description = "Delete a task from a project. "
-    )
+    @Operation(summary = "Delete a task", description = "Delete a task from a project")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Task deleted successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),

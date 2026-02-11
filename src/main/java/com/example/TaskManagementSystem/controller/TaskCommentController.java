@@ -18,18 +18,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/projects/{projectId}/tasks/{taskId}/comments")
 @RequiredArgsConstructor
-@Tag(
-        name = "6. Task Comments",
-        description = "APIs for managing comments on tasks"
-)
+@Tag(name = "6. Task Comments", description = "APIs for managing comments on tasks")
 public class TaskCommentController {
 
     private final ITaskCommentService commentService;
 
-    @Operation(
-            summary = "Create a comment on a task",
-            description = "Add a new comment to a task. Only authorized project members can comment."
-    )
+    @Operation(summary = "Create a comment on a task", description = "Add a new comment to a task (Only Project Member)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Comment created successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
@@ -37,38 +31,25 @@ public class TaskCommentController {
     })
     @PreAuthorize("@taskCommentSecurity.canComment(#projectId, #taskId, principal.username)")
     @PostMapping
-    public ResponseEntity<TaskCommentDTO> create(
-            @PathVariable Long projectId,
-            @PathVariable Long taskId,
-            @RequestBody TaskCommentRequestDTO dto,
-            Principal principal) {
-
-        return ResponseEntity.ok(
-                commentService.create(projectId, taskId, dto, principal.getName())
-        );
+    public ResponseEntity<TaskCommentDTO> create(@PathVariable Long projectId, @PathVariable Long taskId, @RequestBody TaskCommentRequestDTO dto, Principal principal)
+    {
+        return ResponseEntity.ok(commentService.create(projectId, taskId, dto, principal.getName()));
     }
 
-    @Operation(
-            summary = "Get all comments of a task",
-            description = "Retrieve all comments belonging to a specific task"
-    )
+
+    @Operation(summary = "Get all comments of a task", description = "Get all comments belonging to a specific task")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Comments retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Task not found")
     })
     @GetMapping
-    public ResponseEntity<List<TaskCommentDTO>> getAll(
-            @PathVariable Long taskId) {
-
-        return ResponseEntity.ok(
-                commentService.getByTask(taskId)
-        );
+    public ResponseEntity<List<TaskCommentDTO>> getAll(@PathVariable Long taskId)
+    {
+        return ResponseEntity.ok(commentService.getByTask(taskId));
     }
 
-    @Operation(
-            summary = "Update a comment",
-            description = "Update a comment. Only the comment owner or authorized users can update it."
-    )
+
+    @Operation(summary = "Update a comment", description = "Update a comment (Only Comments owner)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Comment updated successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
@@ -76,21 +57,13 @@ public class TaskCommentController {
     })
     @PreAuthorize("@taskCommentSecurity.canUpdate(#projectId, #taskId, #commentId, principal.username)")
     @PutMapping("/{commentId}")
-    public ResponseEntity<TaskCommentDTO> update(
-            @PathVariable Long projectId,
-            @PathVariable Long taskId,
-            @PathVariable Long commentId,
-            @RequestBody TaskCommentRequestDTO dto) {
-
-        return ResponseEntity.ok(
-                commentService.update(projectId, taskId, commentId, dto)
-        );
+    public ResponseEntity<TaskCommentDTO> update(@PathVariable Long projectId, @PathVariable Long taskId, @PathVariable Long commentId, @RequestBody TaskCommentRequestDTO dto)
+    {
+        return ResponseEntity.ok(commentService.update(projectId, taskId, commentId, dto));
     }
 
-    @Operation(
-            summary = "Delete a comment",
-            description = "Delete a comment from a task. Only the comment owner or authorized users can delete it."
-    )
+
+    @Operation(summary = "Delete a comment", description = "Delete a comment from a task (Only comment owner)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Comment deleted successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
@@ -98,11 +71,8 @@ public class TaskCommentController {
     })
     @PreAuthorize("@taskCommentSecurity.canDelete(#projectId, #taskId, #commentId, principal.username)")
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<String> delete(
-            @PathVariable Long projectId,
-            @PathVariable Long taskId,
-            @PathVariable Long commentId) {
-
+    public ResponseEntity<String> delete(@PathVariable Long projectId, @PathVariable Long taskId, @PathVariable Long commentId)
+    {
         commentService.delete(projectId, taskId, commentId);
         return ResponseEntity.ok("Comment deleted");
     }

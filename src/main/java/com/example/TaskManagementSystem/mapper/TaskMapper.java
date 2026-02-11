@@ -11,6 +11,7 @@ import java.util.List;
 public interface TaskMapper {
 
     @Mapping(target = "assignee", source = "assignee.username")
+    @Mapping(target = "createdBy", source = "createdBy.username")
     TaskDTO toDTO(Task task);
 
     List<TaskDTO> toDTOs(List<Task> tasks);
@@ -18,5 +19,6 @@ public interface TaskMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "assignee", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
     Task toEntity(TaskRequestDTO dto);
 }

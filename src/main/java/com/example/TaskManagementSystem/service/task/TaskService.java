@@ -35,9 +35,14 @@ public class TaskService implements ITaskService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
+        User creator = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         Task task = taskMapper.toEntity(dto);
         task.setProject(project);
+        task.setCreatedBy(creator);
 
+        // Validate assignee nếu có
         if (dto.getAssignee() != null && !dto.getAssignee().isBlank()) {
 
             User assignee = userRepository
@@ -46,19 +51,18 @@ public class TaskService implements ITaskService {
 
             projectMemberRepository
                     .findByProject_IdAndUser_Username(projectId, dto.getAssignee())
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException("Assignee is not a member of this project"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Assignee is not a member of this project"));
 
             task.setAssignee(assignee);
         }
+
         return taskMapper.toDTO(taskRepository.save(task));
     }
 
+
     @Override
     public List<TaskDTO> getTasksByProject(Long projectId) {
-        return taskMapper.toDTOs(
-                taskRepository.findByProject_Id(projectId)
-        );
+        return taskMapper.toDTOs(taskRepository.findByProject_Id(projectId));
     }
 
     @Override

@@ -18,18 +18,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectId}/tasks/{taskId}/comments/{commentId}/attachments")
-@Tag(
-        name = "7. Task Attachments",
-        description = "APIs for managing file attachments in task comments"
-)
+@Tag(name = "7. Task Attachments", description = "APIs for managing file attachments in task comments")
 public class TaskAttachmentController {
 
     private final ITaskAttachmentService attachmentService;
 
-    @Operation(
-            summary = "Upload attachment to a comment",
-            description = "Upload a file attachment to a task comment. Only authorized users can upload attachments."
-    )
+    @Operation(summary = "Upload attachment to a comment", description = "Upload a file attachment to a task comment. Only authorized users can upload attachments.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Attachment uploaded successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
@@ -37,55 +31,33 @@ public class TaskAttachmentController {
     })
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
     @PreAuthorize("@taskSecurity.canUpdateTask(#projectId, #taskId, principal.username)")
-    public ResponseEntity<TaskAttachmentDTO> upload(
-            @PathVariable Long projectId,
-            @PathVariable Long taskId,
-            @PathVariable Long commentId,
-            @RequestParam("file") MultipartFile file,
-            Principal principal
-    ) {
-        return ResponseEntity.ok(
-                attachmentService.upload(
-                        projectId,
-                        taskId,
-                        commentId,
-                        file,
-                        principal.getName()
-                )
-        );
+    public ResponseEntity<TaskAttachmentDTO> upload(@PathVariable Long projectId, @PathVariable Long taskId, @PathVariable Long commentId, @RequestParam("file") MultipartFile file, Principal principal)
+    {
+        return ResponseEntity.ok(attachmentService.upload(projectId, taskId, commentId, file, principal.getName()));
     }
 
-    @Operation(
-            summary = "Get attachments by comment",
-            description = "Retrieve all file attachments associated with a specific comment"
-    )
+
+    @Operation(summary = "Get attachments by comment", description = "Get all file attachments associated with a specific comment")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Attachments retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Comment not found")
     })
     @GetMapping
-    public ResponseEntity<List<TaskAttachmentDTO>> getByComment(
-            @PathVariable Long commentId
-    ) {
-        return ResponseEntity.ok(
-                attachmentService.getByComment(commentId)
-        );
+    public ResponseEntity<List<TaskAttachmentDTO>> getByComment(@PathVariable Long commentId)
+    {
+        return ResponseEntity.ok(attachmentService.getByComment(commentId));
     }
 
-    @Operation(
-            summary = "Delete an attachment",
-            description = "Delete a file attachment. Only the uploader or authorized users can delete it."
-    )
+
+    @Operation(summary = "Delete an attachment", description = "Delete a file attachment (Only uploader)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Attachment deleted successfully"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Attachment not found")
     })
     @DeleteMapping("/{attachmentId}")
-    public ResponseEntity<String> delete(
-            @PathVariable Long attachmentId,
-            Principal principal
-    ) {
+    public ResponseEntity<String> delete(@PathVariable Long attachmentId, Principal principal)
+    {
         attachmentService.delete(attachmentId, principal.getName());
         return ResponseEntity.ok("Attachment deleted");
     }

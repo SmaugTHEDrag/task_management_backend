@@ -50,7 +50,11 @@ public class User {
     private Set<ProjectMember> members;
 
     @OneToMany(mappedBy = "createdBy")
-    private Set<Project> project;
+    private Set<Project> createdProjects;
+
+    @OneToMany(mappedBy = "createdBy")
+    private List<Task> createdTasks;
+
 
     @OneToMany(mappedBy = "assignee")
     private List<Task> tasks;
