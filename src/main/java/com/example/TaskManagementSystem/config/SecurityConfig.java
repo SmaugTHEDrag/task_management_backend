@@ -51,7 +51,7 @@ public class SecurityConfig {
                         // Public endpoints (no auth required)
                         .requestMatchers("/api/login").permitAll()
                         .requestMatchers("/api/register").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/ping").permitAll()
+                        .requestMatchers("/api/ping").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/projects").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**",
