@@ -1,9 +1,6 @@
 package com.example.TaskManagementSystem.controller;
 
-import com.example.TaskManagementSystem.dto.user.UpdateRoleDTO;
-import com.example.TaskManagementSystem.dto.user.UserDTO;
-import com.example.TaskManagementSystem.dto.user.UserPageResponse;
-import com.example.TaskManagementSystem.dto.user.UserRequestDTO;
+import com.example.TaskManagementSystem.dto.user.*;
 import com.example.TaskManagementSystem.form.UserFilterForm;
 import com.example.TaskManagementSystem.service.user.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,9 +37,7 @@ public class UserController {
     })
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping
-    public ResponseEntity<UserPageResponse> getAllUsers(UserFilterForm form,
-            @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.ASC
-            ) Pageable pageable){
+    public ResponseEntity<UserPageResponse> getAllUsers(UserFilterForm form, @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
         return ResponseEntity.ok(userService.getAllUsers(form, pageable));
     }
 
@@ -122,4 +118,26 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.ok("User with id " + id + " has been deleted");
     }
+
+    @Operation(summary = "Search users by username", description = "Search users by username for adding project members (Authenticated)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @GetMapping("/search")
+    public ResponseEntity<java.util.List<UserDTO>> searchUsers(@RequestParam String q, @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(userService.searchUsersByUsername(q, limit));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getProfile(Principal principal) {
+        return ResponseEntity.ok(userService.getCurrentUser(principal.getName()));
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<String> changePassword(Principal principal, @RequestBody @Valid ChangePasswordDTO dto) {
+        userService.changePassword(principal.getName(), dto);
+        return ResponseEntity.ok("Password changed successfully");
+    }
+
 }

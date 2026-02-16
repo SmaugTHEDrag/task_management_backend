@@ -1,9 +1,6 @@
 package com.example.TaskManagementSystem.service.user;
 
-import com.example.TaskManagementSystem.dto.user.UpdateRoleDTO;
-import com.example.TaskManagementSystem.dto.user.UserDTO;
-import com.example.TaskManagementSystem.dto.user.UserPageResponse;
-import com.example.TaskManagementSystem.dto.user.UserRequestDTO;
+import com.example.TaskManagementSystem.dto.user.*;
 import com.example.TaskManagementSystem.entity.User;
 import com.example.TaskManagementSystem.entity.UserRole;
 import com.example.TaskManagementSystem.exception.ResourceNotFoundException;
@@ -17,7 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -29,6 +29,8 @@ public class UserService implements IUserService{
     private final IUserRepository userRepository;
 
     private final UserMapper userMapper;
+
+    private final BCryptPasswordEncoder passwordEncoder;
 
     // Get users with pagination and filter
     @Override
@@ -94,6 +96,46 @@ public class UserService implements IUserService{
 
         User user = optionalUser.get();
         user.setRole(UserRole.valueOf(updateRoleDTO.getRole()));
+        userRepository.save(user);
+    }
+
+    // Search users by username (for adding project members)
+    @Override
+    public java.util.List<UserDTO> searchUsersByUsername(String query, int limit) {
+        if (query == null || query.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        UserFilterForm form = new UserFilterForm();
+        form.setUsernameSearch(query.trim());
+        
+        Specification<User> where = UserSpecification.buildWhere(form);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
+        Page<User> users = userRepository.findAll(where, pageable);
+        
+        return users.getContent().stream()
+                .map(userMapper::toDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public UserDTO getCurrentUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return userMapper.toDTO(user);
+    }
+
+    @Override
+    public void changePassword(String username, ChangePasswordDTO dto) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
     }
 }

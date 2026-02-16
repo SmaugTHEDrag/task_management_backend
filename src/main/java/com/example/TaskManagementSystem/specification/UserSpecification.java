@@ -1,6 +1,7 @@
 package com.example.TaskManagementSystem.specification;
 
 import com.example.TaskManagementSystem.entity.User;
+import com.example.TaskManagementSystem.entity.UserRole;
 import com.example.TaskManagementSystem.form.UserFilterForm;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,10 +16,13 @@ public class UserSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // search by username (LIKE)
+            // search by username (LIKE - case insensitive)
             if(form.getUsernameSearch() != null && !form.getUsernameSearch().isEmpty()){
                 String value = "%" + form.getUsernameSearch().toLowerCase() + "%";
-                predicates.add(criteriaBuilder.like(root.get("username"), value));
+                predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("username")), 
+                    value
+                ));
             }
 
             // search by email (LIKE)
@@ -27,10 +31,21 @@ public class UserSpecification {
                 predicates.add(criteriaBuilder.like(root.get("email"), value));
             }
 
-            // search bu role
+            // search by role (exact match, case-insensitive)
             if(form.getRoleSearch() != null && !form.getRoleSearch().isEmpty()){
-                String value = "%" + form.getRoleSearch().toLowerCase() + "%";
-                predicates.add(criteriaBuilder.like(root.get("role"), value));
+                String roleValue = form.getRoleSearch().trim().toUpperCase();
+                try {
+                    // Try to parse as enum value (ADMIN or USER)
+                    UserRole role = UserRole.valueOf(roleValue);
+                    // Use exact enum match
+                    predicates.add(criteriaBuilder.equal(root.get("role"), role));
+                } catch (IllegalArgumentException e) {
+                    // If not a valid enum value, try case-insensitive string comparison
+                    predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.upper(root.get("role").as(String.class)),
+                        roleValue
+                    ));
+                }
             }
 
             // id range filter

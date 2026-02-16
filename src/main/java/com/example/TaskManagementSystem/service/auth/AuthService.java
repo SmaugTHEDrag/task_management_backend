@@ -47,6 +47,7 @@ public class AuthService implements IAuthService, UserDetailsService {
             role = UserRole.valueOf(registerForm.getRole().toUpperCase());
         }
         user.setRole(role);
+        user.setIsActive(true);
 
         User savedUser = userRepository.save(user);
         return authMapper.toDTO(savedUser);
