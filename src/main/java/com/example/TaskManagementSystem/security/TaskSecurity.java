@@ -6,8 +6,12 @@ import com.example.TaskManagementSystem.entity.Task;
 import com.example.TaskManagementSystem.exception.ResourceNotFoundException;
 import com.example.TaskManagementSystem.repository.IProjectMemberRepository;
 import com.example.TaskManagementSystem.repository.ITaskRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+
 @Component("taskSecurity")
 @RequiredArgsConstructor
 public class TaskSecurity {
@@ -16,65 +20,66 @@ public class TaskSecurity {
     private final ITaskRepository taskRepository;
 
 
-    // MEMBER trong project đều được tạo task
+    // MEMBER in a project can create task
     public boolean canCreateTask(Long projectId, String username) {
         projectMemberRepository
                 .findByProject_IdAndUser_Username(projectId, username)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("You are not a member of this project"));
+                .orElseThrow(() -> new ResourceNotFoundException("You are not a member of this project"));
         return true;
     }
 
 
-    // OWNER hoặc TASK CREATOR hoặc ASSIGNEE
+    // OWNER or TASK CREATOR or ASSIGNEE
+    @Transactional
     public boolean canUpdateTask(Long projectId, Long taskId, String username) {
 
         ProjectMember pm = projectMemberRepository
                 .findByProject_IdAndUser_Username(projectId, username)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("You are not a member of this project"));
+                .orElseThrow(() -> new ResourceNotFoundException("You are not a member of this project"));
 
         Task task = taskRepository
                 .findByIdAndProject_Id(taskId, projectId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        // OWNER luôn được
+        // OWNER
         if (pm.getRole() == ProjectRole.OWNER) {
             return true;
         }
 
-        // TASK CREATOR được update
-        if (task.getCreatedBy() != null &&
-                task.getCreatedBy().getUsername().equals(username)) {
+        // TASK CREATOR
+        if (task.getCreatedBy() != null && task.getCreatedBy().getUsername().equals(username)) {
             return true;
         }
 
-        // ASSIGNEE được update
-        return task.getAssignee() != null &&
-                task.getAssignee().getUsername().equals(username);
+        // ASSIGNEE
+        Optional<String> assigneeUsernameOpt = taskRepository.findAssigneeUsername(taskId, projectId);
+        if (assigneeUsernameOpt.isPresent()) {
+            String assigneeUsername = assigneeUsernameOpt.get();
+            return assigneeUsername.equals(username);
+        }
+
+        return false;
     }
 
 
-    // OWNER hoặc TASK CREATOR
+    // OWNER or TASK CREATOR can delete task
+    @Transactional
     public boolean canDeleteTask(Long projectId, Long taskId, String username) {
 
         ProjectMember pm = projectMemberRepository
                 .findByProject_IdAndUser_Username(projectId, username)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("You are not a member of this project"));
+                .orElseThrow(() -> new ResourceNotFoundException("You are not a member of this project"));
 
         Task task = taskRepository
                 .findByIdAndProject_Id(taskId, projectId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        // OWNER được xoá
+        // OWNER
         if (pm.getRole() == ProjectRole.OWNER) {
             return true;
         }
 
-        // TASK CREATOR được xoá
+        // TASK CREATOR
         if (task.getCreatedBy() != null && task.getCreatedBy().getUsername().equals(username)) {
             return true;
         }

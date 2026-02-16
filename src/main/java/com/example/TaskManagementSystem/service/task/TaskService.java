@@ -74,6 +74,7 @@ public class TaskService implements ITaskService {
         return taskMapper.toDTO(task);
     }
 
+
     @Override
     public TaskDTO updateTask(Long projectId, Long taskId, TaskRequestDTO dto, String username) {
 
@@ -104,27 +105,45 @@ public class TaskService implements ITaskService {
             task.setDueDate(dto.getDueDate());
         }
 
-        // update assignee (username)
-        if (dto.getAssignee() != null && !dto.getAssignee().isBlank()) {
+        // update assignee (username) - only if it's actually being changed
+        if (dto.getAssignee() != null) {
+            // Get current assignee username (handle null case)
+            // assignee should be loaded via LEFT JOIN FETCH in findByIdAndProject_Id
+            String currentAssigneeUsername = (task.getAssignee() != null) 
+                    ? task.getAssignee().getUsername() : null;
+            
+            String newAssigneeUsername = dto.getAssignee().isBlank() ? null : dto.getAssignee();
+            
+            // Only check OWNER permission if assignee is actually being changed
+            boolean isAssigneeChanging = !java.util.Objects.equals(currentAssigneeUsername, newAssigneeUsername);
+            
+            if (isAssigneeChanging) {
+                // only OWNER can change assignee or unassign
+                ProjectMember pm = projectMemberRepository
+                        .findByProject_IdAndUser_Username(projectId, username)
+                        .orElseThrow(() -> new ResourceNotFoundException("Not project member"));
 
-            // chỉ OWNER mới được đổi assignee
-            ProjectMember pm = projectMemberRepository
-                    .findByProject_IdAndUser_Username(projectId, username)
-                    .orElseThrow(() -> new ResourceNotFoundException("Not project member"));
+                if (pm.getRole() != ProjectRole.OWNER) {
+                    throw new IllegalStateException("Only OWNER can change assignee");
+                }
 
-            if (pm.getRole() != ProjectRole.OWNER) {
-                throw new IllegalStateException("Only OWNER can change assignee");
+                if (newAssigneeUsername == null) {
+                    // Unassigning
+                    task.setAssignee(null);
+                } else {
+                    // Assigning or changing assignee
+                    User assignee = userRepository
+                            .findByUsername(newAssigneeUsername)
+                            .orElseThrow(() -> new ResourceNotFoundException("Assignee not found"));
+
+                    projectMemberRepository
+                            .findByProject_IdAndUser_Username(projectId, newAssigneeUsername)
+                            .orElseThrow(() -> new ResourceNotFoundException("Assignee is not project member"));
+
+                    task.setAssignee(assignee);
+                }
             }
-
-            User assignee = userRepository
-                    .findByUsername(dto.getAssignee())
-                    .orElseThrow(() -> new ResourceNotFoundException("Assignee not found"));
-
-            projectMemberRepository
-                    .findByProject_IdAndUser_Username(projectId, dto.getAssignee())
-                    .orElseThrow(() -> new ResourceNotFoundException("Assignee is not project member"));
-
-            task.setAssignee(assignee);
+            // If assignee is the same, nothing happen
         }
 
         return taskMapper.toDTO(taskRepository.save(task));
